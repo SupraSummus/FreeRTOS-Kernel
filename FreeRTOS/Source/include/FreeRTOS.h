@@ -999,10 +999,10 @@ the Secure Side only. */
  * made to free the RAM that was allocated statically.
  * tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE is only true if it is possible for a
  * task to be created using either statically or dynamically allocated RAM.  Note
- * that if portUSING_MPU_WRAPPERS is 1 then a protected task can be created with
+ * that if portUSING_MPU is 1 then a protected task can be created with
  * a statically allocated stack and a dynamically allocated TCB.
  *
- * The following table lists various combinations of portUSING_MPU_WRAPPERS,
+ * The following table lists various combinations of portUSING_MPU,
  * configSUPPORT_DYNAMIC_ALLOCATION and configSUPPORT_STATIC_ALLOCATION and
  * when it is possible to have both static and dynamic allocation:
  *  +-----+---------+--------+-----------------------------+-----------------------------------+------------------+-----------+
@@ -1028,8 +1028,8 @@ the Secure Side only. */
  * |     |         |        | xTaskCreateRestrictedStatic |                                   |                  |           |
  * +-----+---------+--------+-----------------------------+-----------------------------------+------------------+-----------+
  */
-#define tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE	( ( ( portUSING_MPU_WRAPPERS == 0 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) ) || \
-													  ( ( portUSING_MPU_WRAPPERS == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) ) )
+#define tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE	( ( ( portUSING_MPU == 0 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) ) || \
+													  ( ( portUSING_MPU == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) ) )
 
 /*
  * In line with software engineering best practice, FreeRTOS implements a strict
@@ -1095,7 +1095,7 @@ typedef struct xSTATIC_LIST
 typedef struct xSTATIC_TCB
 {
 	void				*pxDummy1;
-	#if ( portUSING_MPU_WRAPPERS == 1 )
+	#if ( portUSING_MPU == 1 )
 		xMPU_SETTINGS	xDummy2;
 	#endif
 	StaticListItem_t	xDummy3[ 2 ];

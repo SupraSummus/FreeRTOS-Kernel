@@ -29,6 +29,8 @@
  * Implementation of functions defined in portable.h for the ARM CM3 port.
  *----------------------------------------------------------*/
 
+#include <errno.h>
+
 /* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
 all the API functions to use the MPU wrappers.  That should only be done when
 task.h is included from an application file. */
@@ -257,18 +259,55 @@ void vPortSVCHandler( void )
 }
 /*-----------------------------------------------------------*/
 
+static uint32_t thread_syscall_handler(uint32_t syscall, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
+	switch (syscall) {
+		case 0: { // no-op
+			return 0;
+		}
+		#if ( INCLUDE_vTaskDelay == 1 )
+			case 1: { // delay ms
+				vTaskDelay(pdMS_TO_TICKS(arg1));
+				return 0;
+			}
+		#endif
+		default: {
+			return -ENOSYS;
+		}
+	}
+}
+
+static __attribute__((naked)) void __thread_syscall_handler_wrapper(void) {
+	__asm volatile (
+		"push {lr}         \n"
+
+		// do syscall body
+		"bl %0                 \n"
+
+		// drop privilege
+		"mrs r12, control      \n" /* r12 = CONTROL */
+		"orr r12, #1           \n" /* r12 = r12 | 1 */
+		"msr control, r12      \n" /* CONTROL = r12 */
+
+		// return to caller
+		"pop {pc}          \n"
+		:: "i" (thread_syscall_handler)
+	);
+}
+
 static void prvSVCHandler(	uint32_t *pulParam )
 {
 uint8_t ucSVCNumber;
-
 	/* The stack contains: r0, r1, r2, r3, r12, r14, the return address and
 	xPSR.  The first argument (r0) is pulParam[ 0 ]. */
 	ucSVCNumber = ( ( uint8_t * ) pulParam[ portOFFSET_TO_PC ] )[ -2 ];
 	switch( ucSVCNumber )
 	{
-		case portSVC_START_SCHEDULER	:	portNVIC_SYSPRI1_REG |= portNVIC_SVC_PRI;
-											prvRestoreContextOfFirstTask();
-											break;
+		case portSVC_START_SCHEDULER: {
+			if (!portIS_PRIVILEGED()) break;
+			portNVIC_SYSPRI1_REG |= portNVIC_SVC_PRI;
+			prvRestoreContextOfFirstTask();
+			break;
+		}
 
 		case portSVC_YIELD				:	portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT;
 											/* Barriers are normally not required
@@ -280,19 +319,27 @@ uint8_t ucSVCNumber;
 
 											break;
 
-		case portSVC_RAISE_PRIVILEGE	:	__asm volatile
-											(
-												"	mrs r1, control		\n" /* Obtain current control value. */
-												"	bic r1, #1			\n" /* Set privilege bit. */
-												"	msr control, r1		\n" /* Write back new control value. */
-												::: "r1", "memory"
-											);
-											break;
+		case portSVC_SYSCALL: {
+			// store original return address in r12
+			//pulParam[4] = pulParam[portOFFSET_TO_PC];
+
+			// return to thread svc handler instead of svc caller
+			pulParam[portOFFSET_TO_PC] = (uint32_t)&__thread_syscall_handler_wrapper;
+
+			// raise privilege
+			__asm volatile (
+				"mrs r1, control \n" /* Obtain current control value. */
+				"bic r1, #1      \n" /* Set privilege bit. */
+				"msr control, r1 \n" /* Write back new control value. */
+				::: "memory", "r1"
+			);
+		}
 
 		default							:	/* Unknown SVC call. */
 											break;
 	}
 }
+
 /*-----------------------------------------------------------*/
 
 static void prvRestoreContextOfFirstTask( void )
@@ -450,26 +497,19 @@ void vPortEndScheduler( void )
 
 void vPortEnterCritical( void )
 {
-BaseType_t xRunningPrivileged = xPortRaisePrivilege();
-
 	portDISABLE_INTERRUPTS();
 	uxCriticalNesting++;
-
-	vPortResetPrivilege( xRunningPrivileged );
 }
 /*-----------------------------------------------------------*/
 
 void vPortExitCritical( void )
 {
-BaseType_t xRunningPrivileged = xPortRaisePrivilege();
-
 	configASSERT( uxCriticalNesting );
 	uxCriticalNesting--;
 	if( uxCriticalNesting == 0 )
 	{
 		portENABLE_INTERRUPTS();
 	}
-	vPortResetPrivilege( xRunningPrivileged );
 }
 /*-----------------------------------------------------------*/
 
@@ -847,5 +887,3 @@ uint32_t ul;
 
 #endif /* configASSERT_DEFINED */
 /*-----------------------------------------------------------*/
-
-

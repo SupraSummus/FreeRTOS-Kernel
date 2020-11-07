@@ -253,7 +253,7 @@ typedef struct tskTaskControlBlock 			/* The old naming convention is used to pr
 {
 	volatile StackType_t	*pxTopOfStack;	/*< Points to the location of the last item placed on the tasks stack.  THIS MUST BE THE FIRST MEMBER OF THE TCB STRUCT. */
 
-	#if ( portUSING_MPU_WRAPPERS == 1 )
+	#if ( portUSING_MPU == 1 )
 		xMPU_SETTINGS	xMPUSettings;		/*< The MPU settings are defined as part of the port layer.  THIS MUST BE THE SECOND MEMBER OF THE TCB STRUCT. */
 	#endif
 
@@ -630,7 +630,7 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB ) PRIVILEGED_FUNCTION;
 #endif /* SUPPORT_STATIC_ALLOCATION */
 /*-----------------------------------------------------------*/
 
-#if( ( portUSING_MPU_WRAPPERS == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) )
+#if( ( portUSING_MPU == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) )
 
 	BaseType_t xTaskCreateRestrictedStatic( const TaskParameters_t * const pxTaskDefinition, TaskHandle_t *pxCreatedTask )
 	{
@@ -673,10 +673,10 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB ) PRIVILEGED_FUNCTION;
 		return xReturn;
 	}
 
-#endif /* ( portUSING_MPU_WRAPPERS == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) */
+#endif /* ( portUSING_MPU == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) */
 /*-----------------------------------------------------------*/
 
-#if( ( portUSING_MPU_WRAPPERS == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
+#if( ( portUSING_MPU == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
 
 	BaseType_t xTaskCreateRestricted( const TaskParameters_t * const pxTaskDefinition, TaskHandle_t *pxCreatedTask )
 	{
@@ -722,7 +722,7 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB ) PRIVILEGED_FUNCTION;
 		return xReturn;
 	}
 
-#endif /* portUSING_MPU_WRAPPERS */
+#endif /* ( portUSING_MPU == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) */
 /*-----------------------------------------------------------*/
 
 #if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
@@ -830,7 +830,7 @@ static void prvInitialiseNewTask( 	TaskFunction_t pxTaskCode,
 StackType_t *pxTopOfStack;
 UBaseType_t x;
 
-	#if( portUSING_MPU_WRAPPERS == 1 )
+	#if( portUSING_MPU == 1 )
 		/* Should the task be created in privileged mode? */
 		BaseType_t xRunPrivileged;
 		if( ( uxPriority & portPRIVILEGE_BIT ) != 0U )
@@ -842,7 +842,7 @@ UBaseType_t x;
 			xRunPrivileged = pdFALSE;
 		}
 		uxPriority &= ~portPRIVILEGE_BIT;
-	#endif /* portUSING_MPU_WRAPPERS == 1 */
+	#endif /* portUSING_MPU == 1 */
 
 	/* Avoid dependency on memset() if it is not required. */
 	#if( tskSET_NEW_STACKS_TO_KNOWN_VALUE == 1 )
@@ -964,7 +964,7 @@ UBaseType_t x;
 	}
 	#endif /* configGENERATE_RUN_TIME_STATS */
 
-	#if ( portUSING_MPU_WRAPPERS == 1 )
+	#if ( portUSING_MPU == 1 )
 	{
 		vPortStoreTaskMPUSettings( &( pxNewTCB->xMPUSettings ), xRegions, pxNewTCB->pxStack, ulStackDepth );
 	}
@@ -1008,7 +1008,7 @@ UBaseType_t x;
 	but had been interrupted by the scheduler.  The return address is set
 	to the start of the task function. Once the stack has been initialised
 	the top of stack variable is updated. */
-	#if( portUSING_MPU_WRAPPERS == 1 )
+	#if( portUSING_MPU == 1 )
 	{
 		/* If the port has capability to detect stack overflow,
 		pass the stack end address to the stack initialization
@@ -1031,7 +1031,7 @@ UBaseType_t x;
 		}
 		#endif /* portHAS_STACK_OVERFLOW_CHECKING */
 	}
-	#else /* portUSING_MPU_WRAPPERS */
+	#else /* portUSING_MPU */
 	{
 		/* If the port has capability to detect stack overflow,
 		pass the stack end address to the stack initialization
@@ -1054,7 +1054,7 @@ UBaseType_t x;
 		}
 		#endif /* portHAS_STACK_OVERFLOW_CHECKING */
 	}
-	#endif /* portUSING_MPU_WRAPPERS */
+	#endif /* portUSING_MPU */
 
 	if( pxCreatedTask != NULL )
 	{
@@ -3527,7 +3527,7 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
 #endif /* configNUM_THREAD_LOCAL_STORAGE_POINTERS */
 /*-----------------------------------------------------------*/
 
-#if ( portUSING_MPU_WRAPPERS == 1 )
+#if ( portUSING_MPU == 1 )
 
 	void vTaskAllocateMPURegions( TaskHandle_t xTaskToModify, const MemoryRegion_t * const xRegions )
 	{
@@ -3540,7 +3540,7 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
 		vPortStoreTaskMPUSettings( &( pxTCB->xMPUSettings ), xRegions, NULL, 0 );
 	}
 
-#endif /* portUSING_MPU_WRAPPERS */
+#endif /* portUSING_MPU */
 /*-----------------------------------------------------------*/
 
 static void prvInitialiseTaskLists( void )
@@ -3838,7 +3838,7 @@ static void prvCheckTasksWaitingTermination( void )
 		}
 		#endif /* configUSE_NEWLIB_REENTRANT */
 
-		#if( ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 0 ) && ( portUSING_MPU_WRAPPERS == 0 ) )
+		#if( ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 0 ) && ( portUSING_MPU == 0 ) )
 		{
 			/* The task can only have been allocated dynamically - free both
 			the stack and TCB. */
@@ -5210,5 +5210,3 @@ when performing module tests). */
 	#endif
 
 #endif
-
-

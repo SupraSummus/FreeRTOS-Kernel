@@ -127,7 +127,7 @@ typedef struct xTASK_PARAMETERS
 	UBaseType_t uxPriority;
 	StackType_t *puxStackBuffer;
 	MemoryRegion_t xRegions[ portNUM_CONFIGURABLE_REGIONS ];
-	#if ( ( portUSING_MPU_WRAPPERS == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) )
+	#if ( ( portUSING_MPU == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) )
 		StaticTask_t * const pxTaskBuffer;
 	#endif
 } TaskParameters_t;
@@ -524,7 +524,7 @@ TaskHandle_t xHandle;
  * \defgroup xTaskCreateRestricted xTaskCreateRestricted
  * \ingroup Tasks
  */
-#if( portUSING_MPU_WRAPPERS == 1 )
+#if( portUSING_MPU == 1 )
 	BaseType_t xTaskCreateRestricted( const TaskParameters_t * const pxTaskDefinition, TaskHandle_t *pxCreatedTask ) PRIVILEGED_FUNCTION;
 #endif
 
@@ -612,7 +612,7 @@ TaskHandle_t xHandle;
  * \defgroup xTaskCreateRestrictedStatic xTaskCreateRestrictedStatic
  * \ingroup Tasks
  */
-#if( ( portUSING_MPU_WRAPPERS == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) )
+#if( ( portUSING_MPU == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) )
 	BaseType_t xTaskCreateRestrictedStatic( const TaskParameters_t * const pxTaskDefinition, TaskHandle_t *pxCreatedTask ) PRIVILEGED_FUNCTION;
 #endif
 

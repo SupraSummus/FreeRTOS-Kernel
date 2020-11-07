@@ -70,7 +70,8 @@ typedef unsigned long UBaseType_t;
 /*-----------------------------------------------------------*/
 
 /* MPU specific constants. */
-#define portUSING_MPU_WRAPPERS		1
+#undef  portUSING_MPU_WRAPPERS
+#define portUSING_MPU               (1)
 #define portPRIVILEGE_BIT			( 0x80000000UL )
 
 #define portMPU_REGION_READ_WRITE				( 0x03UL << 24UL )
@@ -113,11 +114,13 @@ typedef struct MPU_SETTINGS
 /* SVC numbers for various services. */
 #define portSVC_START_SCHEDULER				0
 #define portSVC_YIELD						1
-#define portSVC_RAISE_PRIVILEGE				2
+//#define portSVC_RAISE_PRIVILEGE				2
+#define portSVC_SYSCALL                     42
 
 /* Scheduler utilities. */
 
-#define portYIELD()				__asm volatile ( "	SVC	%0	\n" :: "i" (portSVC_YIELD) : "memory" )
+//#define portYIELD()				__asm volatile ( "	SVC	%0	\n" :: "i" (portSVC_YIELD) : "memory" )
+#define portYIELD() portYIELD_WITHIN_API()
 #define portYIELD_WITHIN_API() 													\
 {																				\
 	/* Set a PendSV to request a context switch. */								\
@@ -213,11 +216,6 @@ extern void vResetPrivilege( void );
 #define portIS_PRIVILEGED()			xIsPrivileged()
 
 /**
- * @brief Raise an SVC request to raise privilege.
-*/
-#define portRAISE_PRIVILEGE()		__asm volatile ( "svc %0 \n" :: "i" ( portSVC_RAISE_PRIVILEGE ) : "memory" );
-
-/**
  * @brief Lowers the privilege level by setting the bit 0 of the CONTROL
  * register.
  */
@@ -298,4 +296,3 @@ portFORCE_INLINE static void vPortSetBASEPRI( uint32_t ulNewMaskValue )
 #endif
 
 #endif /* PORTMACRO_H */
-

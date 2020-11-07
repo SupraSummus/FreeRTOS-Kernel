@@ -104,7 +104,7 @@ extern "C" {
  * the order that the port expects to find them.
  *
  */
-#if( portUSING_MPU_WRAPPERS == 1 )
+#if( portUSING_MPU == 1 )
 	#if( portHAS_STACK_OVERFLOW_CHECKING == 1 )
 		StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack, StackType_t *pxEndOfStack, TaskFunction_t pxCode, void *pvParameters, BaseType_t xRunPrivileged ) PRIVILEGED_FUNCTION;
 	#else
@@ -168,7 +168,7 @@ void vPortEndScheduler( void ) PRIVILEGED_FUNCTION;
  * Fills the xMPUSettings structure with the memory region information
  * contained in xRegions.
  */
-#if( portUSING_MPU_WRAPPERS == 1 )
+#if( portUSING_MPU == 1 )
 	struct xMEMORY_REGION;
 	void vPortStoreTaskMPUSettings( xMPU_SETTINGS *xMPUSettings, const struct xMEMORY_REGION * const xRegions, StackType_t *pxBottomOfStack, uint32_t ulStackDepth ) PRIVILEGED_FUNCTION;
 #endif
